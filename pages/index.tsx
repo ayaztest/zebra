@@ -38,7 +38,7 @@ const [totaltwo, setTotaltwo] = useState('')
 const [showPopup, setShowPopup] = useState(false)
   
   
-  const { contract: firstContract } = useContract(
+    const { contract: firstContract } = useContract(
         "0x1615600fE62ed38342F82eb9785029A2b1290DAF", 
         "signature-drop"
     );
@@ -48,13 +48,50 @@ const [showPopup, setShowPopup] = useState(false)
   "signature-drop"
     );
     
-  
+  useEffect(() => {
+    if (!address) {
+      return
+    }
+
+    const checkBalance = async () => {
+      try {
+        if ( firstContract) {
+      const nfts = await  firstContract.getOwned(address);
+          setHasClaimedNFT(nfts?.length > 0);
+          
+          setTotal(nfts.length.toString());
+          
+        }
+             if ( secondContract ) {
+      const nfts = await  secondContract.getOwned(address);
+          setHasClaimedNFT(nfts?.length > 0);
+          
+          setTotaltwo(nfts.length.toString());
+          
+    }
+      } catch (error) {
+        setHasClaimedNFT(false)
+        console.error("Failed to get NFTS", error)
+      }
+      }
+    checkBalance()
+  }, [address, firstContract, secondContract])
  type NFT = {
   metadata: {
     name: string
   }
 }
 
+const getNFTNames = (nfts: NFT[]) => {
+  const ownedNFTNames = nfts.map(nft => nft.metadata.name)
+    .filter(name => typeof name === 'string') as string[];
+  setOwnedNFTNames(ownedNFTNames);
+};
+  const getNFTNamestwo = (nfts: NFT[]) => {
+  const ownedNFTNamestwo = nfts.map(nft => nft.metadata.name)
+    .filter(name => typeof name === 'string') as string[];
+  setOwnedNFTNamestwo(ownedNFTNamestwo);
+};
   const mintNft = async () => {
     try {
       if (firstContract) {
@@ -70,43 +107,6 @@ const [showPopup, setShowPopup] = useState(false)
       setIsClaiming(false)
     }
 }
- 
-  
-  useEffect(() => {
-    if (address) {
-      setWallet(address);
-    }
-}, [address]);
-  useEffect(() => {
-    if (!address) {
-      return;
-    }
-
-    const getOwnedNFTData = async () => {
-      try {
-        const firstNFTs = firstContract ? await firstContract.getOwned(address) : [];
-        const secondNFTs = secondContract ? await secondContract.getOwned(address) : [];
-        setHasClaimedNFT(firstNFTs.length + secondNFTs.length > 0);
-        setTotal((firstNFTs.length + secondNFTs.length).toString());
-
-  
-
-        setOwnedNFTNames(getNFTNames(firstNFTs));
-        setOwnedNFTNamestwo(getNFTNames(secondNFTs));
-      } catch (error) {
-        setHasClaimedNFT(false);
-        console.error("Failed to get owned NFT data", error);
-      }
-
-    };
-
-    const getNFTNames = (nfts: any) => {
-      return nfts.map((nft: any) => {
-        const name = nft.metadata.name;
-        return typeof name === "string" ? name.split(" #")[1] : "";
-      });
-    }
-  })
  
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -153,7 +153,39 @@ const [showPopup, setShowPopup] = useState(false)
     
   }
   
- 
+ useEffect(() => {
+    if (!address) {
+      return;
+    }
+
+    const getOwnedNFTNames = async () => {
+      try {
+        if (firstContract) {
+          const nfts = await firstContract.getOwned(address);
+          const ownedNFTNames = nfts.map((nft) => nft.metadata.name);
+          const ownedNFTNamesFiltered = ownedNFTNames.filter((nft) => nft !== undefined) as string[];
+setOwnedNFTNames(ownedNFTNamesFiltered);
+          
+        }
+         if (secondContract) {
+          const nfts = await secondContract.getOwned(address);
+          const ownedNFTNamestwo = nfts.map((nft) => nft.metadata.name);
+          const ownedNFTNamestwoFiltered = ownedNFTNamestwo.filter((nft) => nft !== undefined) as string[];
+setOwnedNFTNamestwo(ownedNFTNamestwoFiltered);
+          
+        }
+      } catch (error) {
+        console.error("Failed to get owned NFT names", error);
+      }
+    };
+
+    getOwnedNFTNames();
+  }, [address, firstContract, secondContract]);
+  useEffect(() => {
+    if (address) {
+      setWallet(address);
+    }
+}, [address]);
   
 
   return (<div className='overflow-hidden'> 
